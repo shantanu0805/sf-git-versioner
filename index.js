@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 var express = require('express'),
     http = require('http'),
@@ -25,15 +24,21 @@ app.use(session({
     saveUninitialized: true
 }));
 
+const environment = process.env.NODE_ENV || 'development';
+process.env.CALLBACK_URL = environment == 'production' ? process.env.HEROKU_URL : process.env.LOCAL_URL;
+const callbackUrl = process.env.CALLBACK_URL;
+
 var conn2 = {}; sfConnTokens = {}; sfUser = {}; gitUser = {};
 var sfUserFullDetails = {};
-
+//Heroku Url - https://sf-git-versioner.herokuapp.com/
+//Replace localhost with this url for Production run
 var oauth2 = new jsforce.OAuth2({
     // change loginUrl to connect to sandbox
     //loginUrl : 'https://login.salesforce.com',
     clientId: '3MVG9HxRZv05HarStJl4amZCrNBqElkmxu712ds3H7h77BVraWr7Rl4aFhIU8oNMmKDXDBDYlP8y6_Hs39R7H',
     clientSecret: '5522323617141747048',
-    redirectUri: 'http://localhost:3000/oauth2/callback'
+    //redirectUri: 'http://localhost:3000/oauth2/callback'
+    redirectUri: callbackUrl + '/oauth2/callback'
 });
 //status object
 var status = {
@@ -87,7 +92,7 @@ app.get('/success', function(req, res) {
 
 app.get('/gitStart', function (req, res) {
     console.log('Starting GitHub Authentication');
-    res.redirect('https://github.com/login/oauth/authorize?client_id=2d1f7b29b3cc06d52979&scope=public_repo&redirect_uri=http://localhost:3000/git/oauth&state=12345');
+    res.redirect('https://github.com/login/oauth/authorize?client_id=2d1f7b29b3cc06d52979&scope=public_repo&redirect_uri=' + callbackUrl + '/git/oauth&state=12345');
 });
 app.get('/git/oauth', function (req, res) {
 
@@ -99,7 +104,8 @@ app.get('/git/oauth', function (req, res) {
             code: code,
             client_id: '2d1f7b29b3cc06d52979',
             client_secret: '4881ea1e3619c0f286fc756b2bde83e3044c3d74',
-            redirect_uri: 'http://localhost:3000/git/oauth',
+            //redirect_uri: 'http://localhost:3000/git/oauth',
+            redirect_uri: callbackUrl + '/git/oauth',
             state: '12345'
         }
 
