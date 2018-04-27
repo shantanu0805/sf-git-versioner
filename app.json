@@ -1,7 +1,7 @@
 {
   "name": "Start on Heroku: Node.js",
-  "description": "A barebones Node.js app using Express 4",
-  "repository": "https://github.com/heroku/node-js-getting-started",
+  "description": "A Node.js based app using Express, runs on Heroku. Connects to your Salesforce Organization and Github account to create a Metadata backup of your salesforce org.",
+  "repository": "https://github.com/shantanu0805/sf-git-versioner",
   "logo": "https://cdn.rawgit.com/heroku/node-js-getting-started/master/public/node.svg",
   "keywords": ["node", "express", "heroku"],
   "image": "heroku/nodejs"

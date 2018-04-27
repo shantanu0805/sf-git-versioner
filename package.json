@@ -1,11 +1,11 @@
 {
-  "name": "node-js-getting-started",
-  "version": "0.3.0",
-  "description": "A sample Node.js app using Express 4",
+  "name": "sf-git-versioner",
+  "version": "0.1.0",
+  "description": "A Node.js based app using Express, runs on Heroku. Connects to your Salesforce Organization and Github account to create a Metadata backup of your salesforce org.",
   "engines": {
     "node": "8.9.1"
   },
-  "main": "customIndex.js",
+  "main": "app.js",
   "scripts": {
     "start": "node customIndex.js",
     "test": "node test.js"
