@@ -1,13 +1,13 @@
 {
   "name": "sf-git-versioner",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A Node.js based app using Express, runs on Heroku. Connects to your Salesforce Organization and Github account to create a Metadata backup of your salesforce org.",
   "engines": {
     "node": "8.9.1"
   },
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node customIndex.js",
+    "start": "node index.js",
     "test": "node test.js"
   },
   "dependencies": {
@@ -39,7 +39,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
+    "url": "https://github.com/shantanu0805/sf-git-versioner"
   },
   "keywords": [
     "node",
