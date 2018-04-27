@@ -1,0 +1,17 @@
+#loading {
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    background: url('spinner.gif') no-repeat center center;
+}
+div.dropdown-menu.open{
+    max-height: 250px !important;
+    overflow: hidden;
+}
+ul.dropdown-menu.inner{
+    max-height: 250px !important;
+    overflow-y: auto;
+}
+.btn-success {
+    margin-left: 5%;
+}

@@ -1,0 +1,122 @@
+<apex:page sidebar="false" standardStylesheets="false">
+    
+    <style>
+        @font-face {
+          font-family: 'TrailheadBold';
+          src: url('{!URLFOR($Resource.th_con_app__thBoldotf)}'); 
+          src: url('{!URLFOR($Resource.th_con_app__thBoldttf)}')  format('truetype'); 
+        }
+        
+        html, body {
+            height: 100%;
+        }
+        
+        .bodyDiv {
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            background: #F3F3F3 url('{!URLFOR($Resource.th_con_app__thBackground)}') repeat left top !important;
+            padding-bottom: 0;
+        }
+        
+        .th-container {
+            background: white;
+            position: relative;
+            padding: 35px;
+            width: 50%;
+            margin: 0 auto;
+            margin-top: 50px;
+            border-radius: 10px;
+            height: 100%;
+        }
+        
+        .thLogoImg {
+            height: 150px;
+            width: auto;
+            display: block;
+            position: relative;
+            margin: 0 auto; 
+        }
+        
+        .th-content {
+            width: 75%;
+            position: relative;
+            margin: 0 auto; 
+            text-align: center;
+        }
+        
+        .th-content h1 {
+            font-family: 'TrailheadBold';
+            font-size: 30px;
+            position: relative;
+            top: 15px;
+        }
+        
+        .th-content p {
+            position: relative;
+            top:15px;
+            font-size: 15px;
+        }
+
+        /* button bgnd */
+        .th-button {
+            background: #69B0ED;
+            box-shadow: 0 2px 0 0 #3F95DF;
+            border-radius: 4px;
+            position: relative;
+            margin: 0 auto;
+            width: 50%;
+            padding: 15px;
+        }
+        
+        /* Text */
+        .th-button-text, .th-content .th-button a, .th-content .th-button a:hover {
+            font-family: SalesforceSans-Regular;
+            font-size: 16px;
+            color: #FFFFFF;
+            line-height: 24px;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        /* Note */
+        .th-note {
+            background: #fffcdd;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+    </style>
+    
+        <div class="th-container">
+            <apex:image url="{!URLFOR($Resource.th_con_app__thLogo)}" styleClass="thLogoImg" />
+            
+            <div class="th-content">
+                <h1>Welcome to your Trailhead Playground</h1>
+                <p>
+                    We created this Salesforce org especially for you! You can do all your hands-on challenges for Trailhead right here.
+                </p>
+                
+                    <p class="th-note">
+                    <b><u>Note:</u></b> Since you can access this org directly from Trailhead, you don’t have to worry about logging in. If you ever do need to log in (e.g., to install a package), 
+                    <a href="https://force.desk.com/customer/portal/articles/2659738-how-to-get-a-password-for-my-trailhead-playground?b_id=13478">this article</a>
+                    shows you how to find your username and reset your password.
+                    </p>
+                    
+                <p>
+                    You’re here to get hands-on, so we’ll leave you to it.<br/><br/>
+                </p>
+                    <div class="th-button">
+                        <a href="https://trailhead.salesforce.com" target="_blank">
+                            <div class="th-button-text">
+                                Take me back to Trailhead!
+                            </div>
+                        </a>
+                    </div>
+                <p>
+                    <h1>
+                        Happy trails!   
+                    </h1>
+                </p>
+            </div>
+        </div>
+</apex:page>
