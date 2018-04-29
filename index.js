@@ -12,21 +12,40 @@ var git = require('gift');
 var path = require('path');
 var fse = require("fs-extra");
 var cookieParser = require('cookie-parser');
-var session = require('express-session');
+//var session = require('express-session');
 
 app.set('port', process.env.PORT || 3000);
-app.use(express.static(__dirname + '/resource')); 
-app.use(cookieParser());
 
-app.use(session({
+/* app.use(session({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: true
-}));
+})); */
+app.use(cookieParser());
+app.use(function (req, res, next) {
+    // check if client sent cookie
+    /* var cookie = req.cookies.cookieName;
+    if (cookie === undefined){
+      // no: set a new cookie
+      var randomNumber=Math.random().toString();
+      randomNumber=randomNumber.substring(2,randomNumber.length);
+      res.cookie('cookieName',randomNumber, { maxAge: 900000, httpOnly: true });
+      console.log('cookie created successfully');
+    } 
+    else{
+      // yes, cookie was already present 
+      //console.log('cookie exists', cookie);
+    }  */
+    next(); // <-- important!
+});
+
+app.use(express.static(__dirname + '/resource')); 
 
 const environment = process.env.NODE_ENV || 'development';
 process.env.CALLBACK_URL = environment == 'production' ? process.env.HEROKU_URL : process.env.LOCAL_URL;
 const callbackUrl = process.env.CALLBACK_URL;
+console.log('Running Environment : ' + environment);
+console.log('CALLBACK_URL : ' + callbackUrl);
 
 var conn2 = {}; sfConnTokens = {}; sfUser = {}; gitUser = {};
 var sfUserFullDetails = {};
@@ -55,33 +74,34 @@ var gitRepoExists = false;
 
 app.get('/', function (req, res) {
     console.log('Current Directory : ' + __dirname);
-    if(req.session.sfUserData)
-        console.log("session.accessToken : " + req.session.sfUserData.accessToken);
     /*
     var reqPath = path.join(__dirname, '../../');
     fs.mkdirSync(reqPath + '/tmpfldr');
     folderPath = reqPath + '/tmpfldr';
     */
     res.sendFile(path.join(__dirname + '/index.html'));
-    console.log('Starting Salesforce Authentication');
     //res.redirect('/oauth2/auth');
 });
 
 app.get('/index', function(req, res) {
     var passedVariable = req.query.login;
     var getSfFiles = req.query.getSfFiles;
-    if(getSfFiles == 'true'){
+    var sfFilesExtracted = req.cookies.sfFilesExtracted;
+    if(getSfFiles == 'true' && sfFilesExtracted != 'true'){
         stratSfMtDtFileExtract(req, res, function (err, success) {
             if (!err) {
                 console.log('stratSfMtDtFileExtract Process Success');
+                res.cookie('sfFilesExtracted' , true).sendFile(path.join(__dirname + '/index.html'));
             }
             else {
                 console.log('stratSfMtDtFileExtract Process Error : ' + err);
+                res.cookie('sfFilesExtracted' , false).sendFile(path.join(__dirname + '/index.html'));
             }
         });
     }
-    res.sendFile(path.join(__dirname + '/index.html'));
-    // Do something with variable
+    else{
+        res.sendFile(path.join(__dirname + '/index.html'));
+    }
 });
 
 app.get('/success', function(req, res) {
@@ -275,7 +295,7 @@ app.get('/oauth2/callback', function (req, res) {
         sfConnTokens.instanceUrl = conn.instanceUrl;
 
         res.cookie('sfUserLoggedIn', true);
-        req.session.sfUserData = sfConnTokens;
+        //req.session.sfUserData = sfConnTokens;
 
         sfUser.sfConnTokens = sfConnTokens;
         sfUser.instanceUrl = conn.instanceUrl;
@@ -374,6 +394,7 @@ function stratSfMtDtFileExtract(req, res, callback){
                 if (!err){
                     //res.redirect('/gitStart');
                     //res.cookie('sfFilesExtracted', true);
+                    callback(null, success);
                 }
             });
         });
@@ -495,11 +516,12 @@ function sfRetrieveZip(conn, callback) {
         unpackaged: package
     }).stream();
     stream.on('end', function () {
-        return callback(null);
+        return callback(null, 'success retreiving zip');
     });
     stream.on('error', function (err) {
         //return callback((err)?createReturnObject(err, 'SF Retrieving metadata ZIP file failed'):null);
         console.log("sfMetadataTypes err : " + err);
+        callback(err, null);
     });
     //stream.pipe(fs.createWriteStream(status.tempPath+status.zipPath+status.zipFile));
     stream.pipe(fs.createWriteStream(__dirname + status.tempPath + status.zipPath + status.zipFile));
