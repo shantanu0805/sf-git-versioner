@@ -117,6 +117,7 @@ $(document).ready(function(){
     }
     var loggedInSfUser = $.cookie("sfUserLoggedIn");
     var loggedInSfUserDetails = $.cookie("sfUserFullDetails");
+    var gitOperationSuccess = $.cookie("gitOperationSuccess");
     /* var getSfFilesCookie = $.cookie("sfFilesExtracted");    
     if(getSfFilesCookie == 'true'){
         $("[href='#step3']").tab('show');
@@ -154,6 +155,15 @@ $(document).ready(function(){
         $('.alert-success').hide();
         $('.lg-btn').hide();
         $('#myWizard').hide();
+    }
+    
+    if (gitOperationSuccess == 'true') {
+        
+        $('#jumbo1').hide();
+        $('.alert-success').show();
+        $('.alert-danger').hide(); 
+        $('.lg-btn').show();
+        $("[href='#step4']").tab('show');
     }
     
     $("#prodBtn").click(prodLogin);

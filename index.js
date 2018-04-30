@@ -219,9 +219,11 @@ function getGitUser(access_token) {
                                                         console.log("gitPush success : " + success);
                                                         if (!err) {
                                                             console.log('Full Process Success');
+                                                            res.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
                                                         }
                                                         else {
                                                             console.log('Full Process Error : ' + err);
+                                                            res.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                         }
                                                     });
                                                 }
