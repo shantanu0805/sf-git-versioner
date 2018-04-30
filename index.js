@@ -657,13 +657,16 @@ function gitClone(access_token, callback) {
 function gitAdd(access_token, callback) {
 
     console.log('cwd : ' + __dirname);
-    var cwd = process.cwd();
+    var gitRepoPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+    process.chdir(gitRepoPath);
+    /* var cwd = process.cwd();
 
     var reqPath = path.join(__dirname, '../');
 
     process.chdir(path.join(__dirname, '../' + status.unZipPath + '_'  + sfUser.userOrgId));
     process.chdir(cwd);
     console.log('new cwd : ' + __dirname);
+ */
 
     gitRepo.add("-A", function (err) {
         console.log(err);
