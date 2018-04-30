@@ -41,7 +41,10 @@ app.use(function (req, res, next) {
 
 app.use(express.static(__dirname + '/resource')); 
 
-const environment = process.env.NODE_ENV || 'development';
+var environment = process.env.NODE_ENV || 'development';
+console.log('process.env.NODE_ENV : ' + process.env.NODE_ENV);
+console.log('environment : ' + environment);
+environment = 'production';
 process.env.CALLBACK_URL = environment == 'production' ? process.env.HEROKU_URL : process.env.LOCAL_URL;
 const callbackUrl = process.env.CALLBACK_URL;
 console.log('Running Environment : ' + environment);

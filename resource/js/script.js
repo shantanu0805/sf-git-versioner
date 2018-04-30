@@ -174,8 +174,10 @@ $(document).ready(function(){
 
     //Enable if the user wants to after the user has selected
     $('#startBtn').click(function () {
-        $('#myWizard').show();
-        $('#jumbo1').hide();
+        //$('#myWizard').show();
+        //$('#jumbo1').hide();
+        $('#jumbo1').toggle(600);
+        $('#myWizard').toggle(600);
     });
     
     $('#nextBtn').click(function () {
