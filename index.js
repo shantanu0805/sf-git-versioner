@@ -13,6 +13,7 @@ var path = require('path');
 var fse = require("fs-extra");
 var cookieParser = require('cookie-parser');
 //var session = require('express-session');
+var config = require(path.join(__dirname + '/config.js'));
 
 app.set('port', process.env.PORT || 3000);
 
@@ -44,10 +45,7 @@ app.use(express.static(__dirname + '/resource'));
 var environment = process.env.NODE_ENV || 'development';
 console.log('process.env.NODE_ENV : ' + process.env.NODE_ENV);
 console.log('environment : ' + environment);
-environment = 'production';
-process.env.CALLBACK_URL = environment == 'production' ? process.env.HEROKU_URL : process.env.LOCAL_URL;
-const callbackUrl = process.env.CALLBACK_URL;
-console.log('Running Environment : ' + environment);
+const callbackUrl = environment == 'production' ? config.app_prod_url : config.app_local_url;
 console.log('CALLBACK_URL : ' + callbackUrl);
 
 var conn2 = {}; sfConnTokens = {}; sfUser = {}; gitUser = {};
