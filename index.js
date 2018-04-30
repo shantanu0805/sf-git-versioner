@@ -64,7 +64,7 @@ var oauth2 = new jsforce.OAuth2({
 var status = {
     tempPath: '/tmp/',
     zipPath: "zips/",
-    repoPath: "repos/",
+    sfExtract: "sfExtract/",
     zipFile: "_MyPackage" + Math.random() + ".zip",
     unZipPath: "unZip/"
     //zipFile : "MyPackage.zip"    
@@ -194,9 +194,11 @@ function getGitUser(access_token) {
                             console.log("gitClone success : " + success);
                             if (!err) {
                                 //reqPath + status.unZipPath + '_' + sfUser.userOrgId
-                                var source = __dirname + status.tempPath + status.repoPath + 'unpackaged/';
+                                //folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+                                var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
                                 var reqPath = path.join(__dirname, '../');
-                                var destination = reqPath + status.unZipPath + '_'  + sfUser.userOrgId;
+                                //var destination = reqPath + status.unZipPath + '_'  + sfUser.userOrgId;
+                                var destination = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
                                 // copy source folder to destination
                                 fse.copy(source, destination, function (err) {
                                     if (err) {
@@ -271,8 +273,8 @@ app.get('/oauth2/callback', function (req, res) {
         if (!fs.existsSync(__dirname + status.tempPath + status.zipPath)) {
             fs.mkdirSync(__dirname + status.tempPath + status.zipPath);
         }
-        if (!fs.existsSync(__dirname + status.tempPath + status.repoPath)) {
-            fs.mkdirSync(__dirname + status.tempPath + status.repoPath);
+        if (!fs.existsSync(__dirname + status.tempPath + status.sfExtract)) {
+            fs.mkdirSync(__dirname + status.tempPath + status.sfExtract);
         }
     } catch (ex) {
         console.log('Exception while creating folders :' + ex);
@@ -543,17 +545,17 @@ function unzipFile(callback) {
 
     var readmeBody = process.env.REPO_README || "";
     /*
-    fs.writeFile(__dirname + status.tempPath+status.repoPath+status.zipFile+'/README.md', readmeBody, function(err) {
+    fs.writeFile(__dirname + status.tempPath+status.sfExtract+status.zipFile+'/README.md', readmeBody, function(err) {
         if(err){
             return callback('README.md file creation failed', null);
         }
-        fs.writeFile(__dirname + status.tempPath+status.repoPath+status.zipFile+'/.gitignore', gitIgnoreBody, function(err) {
+        fs.writeFile(__dirname + status.tempPath+status.sfExtract+status.zipFile+'/.gitignore', gitIgnoreBody, function(err) {
             if(err){
                 return callback('.gitignore file creation failed', null);
             }
             try{
                 var zip = new AdmZip(__dirname + status.tempPath+status.zipPath+status.zipFile);
-                zip.extractAllTo(__dirname + status.tempPath+status.repoPath+status.zipFile+'/', true);
+                zip.extractAllTo(__dirname + status.tempPath+status.sfExtract+status.zipFile+'/', true);
                 return callback(null);
             }catch(ex){
                 return callback(ex, null);
@@ -563,7 +565,7 @@ function unzipFile(callback) {
     */
     try {
         var zip = new AdmZip(__dirname + status.tempPath + status.zipPath + status.zipFile);
-        zip.extractAllTo(__dirname + status.tempPath + status.repoPath + '/', true);
+        zip.extractAllTo(__dirname + status.tempPath + status.sfExtract + '/', true);
         return callback(null, 'Zip extracted succesfully');
     } catch (ex) {
         return callback(ex, null);
@@ -613,18 +615,34 @@ function createRepo(access_token, username, callback) {
 //Clones original repo
 var gitRepo;
 function gitClone(access_token, callback) {
-    var folderPath = __dirname + status.tempPath + status.repoPath;
+    var folderPath = __dirname + status.tempPath + status.sfExtract;
     //https://x-access-token:[TOKEN REMOVED]@github.com/scoutapp/[REPO]
 
-    var reqPath = path.join(__dirname, '../');
-    if (!fs.existsSync(reqPath + status.unZipPath)) {
+    var reqPath = path.join(__dirname, '../');    
+    /* if (!fs.existsSync(reqPath + status.unZipPath)) {
         fs.mkdirSync(reqPath + status.unZipPath);
     }
     if (!fs.existsSync(reqPath + status.unZipPath + '_' + sfUser.userOrgId)) {
         fs.mkdirSync(reqPath + status.unZipPath + '_' + sfUser.userOrgId);
-    }
-    folderPath = reqPath + status.unZipPath + '_' + sfUser.userOrgId;
+    } */
 
+    //var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
+    if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/')) {
+        fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/');
+    }
+    if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId)) {
+        fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId);
+    }
+    //folderPath = reqPath + status.unZipPath + '_' + sfUser.userOrgId;
+    folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+    /* var status = {
+        tempPath: '/tmp/',
+        zipPath: "zips/",
+        sfExtract: "repos/",
+        zipFile: "_MyPackage" + Math.random() + ".zip",
+        unZipPath: "unZip/"
+        //zipFile : "MyPackage.zip"    
+    }; */
     process.env.REPO_URL = process.env.REPO_URL || 'https://x-access-token:' + access_token + '@github.com/shantanu107/test0805'
     git.clone(process.env.REPO_URL, folderPath,
         function (err, _repo) {
