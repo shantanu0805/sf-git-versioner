@@ -182,9 +182,19 @@ function getGitUser(access_token) {
         getGitRepo(access_token, function (err, success) {
             console.log("getGitRepo err : " + err);
             console.log("getGitRepo success : " + success);
-            if (!err) {
+
+            if(!err){
                 gitRepoExists = true;
                 gitUser.gitRepoExists = true;
+            }
+            if(err == 'git repo not found'){
+                gitRepoExists = false;
+                gitUser.gitRepoExists = false;
+                err = null;
+            }
+            if (!err) {
+                //gitRepoExists = true;
+                //gitUser.gitRepoExists = true;
                 createRepo(access_token, 'shantanu107', function (err, success) {
                     console.log("createRepo err : " + err);
                     console.log("createRepo success : " + success);
@@ -219,11 +229,11 @@ function getGitUser(access_token) {
                                                         console.log("gitPush success : " + success);
                                                         if (!err) {
                                                             console.log('Full Process Success');
-                                                            res.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
+                                                            //res.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
                                                         }
                                                         else {
                                                             console.log('Full Process Error : ' + err);
-                                                            res.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
+                                                            //res.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                         }
                                                     });
                                                 }
@@ -649,6 +659,7 @@ function gitClone(access_token, callback) {
     git.clone(process.env.REPO_URL, folderPath,
         function (err, _repo) {
             gitRepo = _repo;
+            console.log(_repo);
             gitUser.gitRepo = _repo;
             //deletes all cloned files except the .git folder (the ZIP file will be the master)
             //deleteFolderRecursive(folderPath, '.git', true);
@@ -717,6 +728,12 @@ function getGitRepo(access_token, callback) {
         if (err) {
             return callback('git repo get failed', null);
         }
-        return callback(null, 'git successfullyget repo');
+        var gitGetRepoResp = JSON.parse(body);
+        if(gitGetRepoResp.message == 'Not Found'){
+            return callback('git repo not found', null);
+        }
+        else{
+            return callback(null, 'git successfully get repo');
+        }
     });
 }
