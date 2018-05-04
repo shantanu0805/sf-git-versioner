@@ -308,7 +308,8 @@ $(document).ready(function(){
         $target.animate({scrollTop: $target.height()}, 3000);
     })
 
-    var socket = io.connect('http://localhost:3000');
+    //var socket = io.connect('http://localhost:3000');
+    var socket = io.connect(window.location.protocol + window.location.host);
     socket.on('gitStatus', function (data) {
       //console.log(data);
       if(data.gitStatus == 'success'){
