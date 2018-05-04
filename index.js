@@ -1,9 +1,10 @@
 require('dotenv').config();
-var express = require('express'),
+/* var express = require('express'),
     http = require('http'),
     request = require('request'),
     bodyParser = require('body-parser'),
-    app = express();
+    app = express(); */
+var request = require('request');
 var jsforce = require('jsforce');
 var async = require('async');
 var fs = require('fs');
@@ -15,33 +16,22 @@ var cookieParser = require('cookie-parser');
 //var session = require('express-session');
 var config = require(path.join(__dirname + '/config.js'));
 
-app.set('port', process.env.PORT || 3000);
+var express = require('express');
+var app = express();
+var http = require('http').Server(app);
+var io = require("socket.io")(http);
 
-/* app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true
-})); */
+
+//app.set('port', process.env.PORT || 3000);
 app.use(cookieParser());
 app.use(function (req, res, next) {
-    // check if client sent cookie
-    /* var cookie = req.cookies.cookieName;
-    if (cookie === undefined){
-      // no: set a new cookie
-      var randomNumber=Math.random().toString();
-      randomNumber=randomNumber.substring(2,randomNumber.length);
-      res.cookie('cookieName',randomNumber, { maxAge: 900000, httpOnly: true });
-      console.log('cookie created successfully');
-    } 
-    else{
-      // yes, cookie was already present 
-      //console.log('cookie exists', cookie);
-    }  */
     next(); // <-- important!
 });
 
-app.use(express.static(__dirname + '/resource')); 
+app.use(express.static(__dirname + '/resource'));
 
+//Heroku Url - https://sf-git-versioner.herokuapp.com/
+//Replace localhost with this url for Production run
 var environment = process.env.NODE_ENV || 'development';
 console.log('process.env.NODE_ENV : ' + process.env.NODE_ENV);
 console.log('environment : ' + environment);
@@ -50,8 +40,7 @@ console.log('CALLBACK_URL : ' + callbackUrl);
 
 var conn2 = {}; sfConnTokens = {}; sfUser = {}; gitUser = {};
 var sfUserFullDetails = {};
-//Heroku Url - https://sf-git-versioner.herokuapp.com/
-//Replace localhost with this url for Production run
+
 var oauth2 = new jsforce.OAuth2({
     // change loginUrl to connect to sandbox
     //loginUrl : 'https://login.salesforce.com',
@@ -84,28 +73,49 @@ app.get('/', function (req, res) {
     //res.redirect('/oauth2/auth');
 });
 
-app.get('/index', function(req, res) {
+io.on('connection', function (socket) {
+    socket.emit('news', { hello: 'world' });
+    socket.on('my other event', function (data) {
+      //console.log(data);
+    });
+    socket.on('get git status', function (data) {
+      //console.log(data);
+      socket.emit('gitStatus', { gitStatus: gitUser.gitStatus });
+    });
+    socket.on('get sf status', function (data) {
+      //console.log(data);
+      socket.emit('sfOpStatus', { sfOpStatus: sfUser.sfOpStatus });
+    });
+});
+
+http.listen(3000,function(){
+    console.log("Listening on 3000");
+});
+
+app.get('/index', function (req, res) {
     var passedVariable = req.query.login;
     var getSfFiles = req.query.getSfFiles;
     var sfFilesExtracted = req.cookies.sfFilesExtracted;
-    if(getSfFiles == 'true' && sfFilesExtracted != 'true'){
+    if (getSfFiles == 'true' && sfFilesExtracted != 'true') {
+        sfUser.sfOpStatus = 'Starting Salesforce Metadata Extraction';
         stratSfMtDtFileExtract(req, res, function (err, success) {
             if (!err) {
                 console.log('stratSfMtDtFileExtract Process Success');
-                res.cookie('sfFilesExtracted' , true).sendFile(path.join(__dirname + '/index.html'));
+                sfUser.sfOpStatus = 'Salesforce File Extraction Process Complete';
+                res.cookie('sfFilesExtracted', true).sendFile(path.join(__dirname + '/index.html'));
             }
             else {
                 console.log('stratSfMtDtFileExtract Process Error : ' + err);
-                res.cookie('sfFilesExtracted' , false).sendFile(path.join(__dirname + '/index.html'));
+                res.cookie('sfFilesExtracted', false).sendFile(path.join(__dirname + '/index.html'));
             }
         });
     }
-    else{
+    else {
         res.sendFile(path.join(__dirname + '/index.html'));
     }
 });
 
-app.get('/success', function(req, res) {
+app.get('/success', function (req, res) {
     var passedVariable = req.query.sfLogin;
     res.sendFile(path.join(__dirname + '/success.html'));
     // Do something with variable
@@ -115,7 +125,7 @@ app.get('/gitStart', function (req, res) {
     console.log('Starting GitHub Authentication');
     res.redirect('https://github.com/login/oauth/authorize?client_id=2d1f7b29b3cc06d52979&scope=public_repo&redirect_uri=' + callbackUrl + '/git/oauth&state=12345');
 });
-app.get('/git/oauth', function (req, res) {
+app.get('/git/oauth', function (req, response) {
 
     var code = req.param('code');
     var access_token = '';
@@ -147,11 +157,11 @@ app.get('/git/oauth', function (req, res) {
             console.log('Github access_token call statusCode: ', statusCode);
             access_token = (body.access_token != null && body.access_token != access_token) ? body.access_token : access_token;
             console.log('Github access_token call access_token : ', access_token);
-            getGitUser(access_token);
+            getGitUser(access_token, response);
         })
     }
 });
-function getGitUser(access_token) {
+function getGitUser(access_token, response) {
 
     var url = 'https://api.github.com/user';
     var token = 'token ' + access_token;
@@ -178,19 +188,22 @@ function getGitUser(access_token) {
         gitUser.repos_url = body.repos_url;
         gitUser.type = body.type;
         gitUser.email = body.email;
-
+        gitUser.gitStatus = 'Github Login Successfull. Checking if Repository already exists';
+        //response.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
         getGitRepo(access_token, function (err, success) {
             console.log("getGitRepo err : " + err);
             console.log("getGitRepo success : " + success);
 
-            if(!err){
+            if (!err) {
                 gitRepoExists = true;
                 gitUser.gitRepoExists = true;
+                gitUser.gitStatus = 'Github Repository already exists!';
             }
-            if(err == 'git repo not found'){
+            if (err == 'git repo not found') {
                 gitRepoExists = false;
                 gitUser.gitRepoExists = false;
                 err = null;
+                gitUser.gitStatus = 'sf-git-versioner Github Repository not found';
             }
             if (!err) {
                 //gitRepoExists = true;
@@ -203,6 +216,7 @@ function getGitUser(access_token) {
                             console.log("gitClone err : " + err);
                             console.log("gitClone success : " + success);
                             if (!err) {
+                                gitUser.gitStatus = 'Cloning sf-git-versioner Github Repository';
                                 //reqPath + status.unZipPath + '_' + sfUser.userOrgId
                                 //folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
                                 var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
@@ -216,24 +230,29 @@ function getGitUser(access_token) {
                                         return console.error(err);
                                     }
                                     console.log('Copy completed!');
+                                    gitUser.gitStatus = 'Copying Salesforce files into sf-git-versioner Github Repository';
                                     gitAdd(access_token, function (err, success) {
                                         console.log("gitAdd err : " + err);
                                         console.log("gitAdd success : " + success);
                                         if (!err) {
+                                            gitUser.gitStatus = 'Running git Add command for sf-git-versioner Github Repository';
                                             gitCommit(access_token, function (err, success) {
                                                 console.log("gitCommit err : " + err);
                                                 console.log("gitCommit success : " + success);
                                                 if (!err) {
+                                                    gitUser.gitStatus = 'Commiting files on sf-git-versioner Github Repository';
                                                     gitPush(access_token, function (err, success) {
                                                         console.log("gitPush err : " + err);
                                                         console.log("gitPush success : " + success);
                                                         if (!err) {
                                                             console.log('Full Process Success');
-                                                            //res.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
+                                                            gitUser.gitStatus = 'Files successfully pushed to sf-git-versioner Github Repository Origin';
+                                                            gitUser.gitStatus = 'success';
+                                                            response.cookie('gitOperationSuccess', true).redirect('/index?gitOpSuccess=true');
                                                         }
                                                         else {
                                                             console.log('Full Process Error : ' + err);
-                                                            //res.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
+                                                            response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                         }
                                                     });
                                                 }
@@ -252,7 +271,7 @@ function getGitUser(access_token) {
 
 app.get('/oauth2/auth', function (req, res) {
     var endpoint = req.query.sfEndpointUrl;
-    if(endpoint){
+    if (endpoint) {
         oauth2.loginUrl = 'https://' + endpoint + '.salesforce.com';
         oauth2.tokenServiceUrl = "https://" + endpoint + ".salesforce.com/services/oauth2/token";
         oauth2.revokeServiceUrl = "https://" + endpoint + ".salesforce.com/services/oauth2/revoke";
@@ -303,7 +322,7 @@ app.get('/oauth2/callback', function (req, res) {
         console.log('Salesforce instanceUrl :' + conn.instanceUrl);
         console.log("Salesforce User ID: " + userInfo.id);
         console.log("Salesforce Org ID: " + userInfo.organizationId);
-        
+
         //res.send('success'); // or your desired response
         sfConnTokens.accessToken = conn.accessToken;
         sfConnTokens.refreshToken = conn.refreshToken;
@@ -316,20 +335,23 @@ app.get('/oauth2/callback', function (req, res) {
         sfUser.instanceUrl = conn.instanceUrl;
         sfUser.userId = userInfo.id;
         sfUser.userOrgId = userInfo.organizationId;
+        sfUser.sfOpStatus = 'Salesforce Login Successfull';
         status.zipFile = "Metadata_" + sfUser.userOrgId + ".zip";
 
         getSFUserDetails(sfConnTokens.endpoint, sfUser.userId, sfUser.userOrgId, function (err, success) {
             console.log("getSFUserDetails err : " + err);
             console.log("getSFUserDetails success : " + success);
             if (!err) {
+                sfUser.sfOpStatus = 'Salesforce User Details Fetched';
                 sfUserFullDetails = success;
                 res.cookie('sfUserFullDetails', sfUserFullDetails);
                 //res.redirect('/success?sfLogin=' + encodeURIComponent('true'));
-                getSFMetaData(res, conn2, function(err, success) {
-                    if (err){
+                getSFMetaData(res, conn2, function (err, success) {
+                    if (err) {
                         return callback(err, null);
                     }
-                    else{
+                    else {
+                        sfUser.sfOpStatus = 'Salesforce Metadata Details Fetched';
                         res.redirect('/success?sfLogin=' + encodeURIComponent('true'));
                     }
                 });
@@ -340,20 +362,20 @@ app.get('/oauth2/callback', function (req, res) {
         });
 
         conn2 = new jsforce.Connection({
-            oauth2 : oauth2,
-            instanceUrl : sfConnTokens.instanceUrl,
-            accessToken : sfConnTokens.accessToken,
-            refreshToken : sfConnTokens.refreshToken
+            oauth2: oauth2,
+            instanceUrl: sfConnTokens.instanceUrl,
+            accessToken: sfConnTokens.accessToken,
+            refreshToken: sfConnTokens.refreshToken
         });
         conn2.metadata.pollTimeout = process.env.SF_METADATA_POLL_TIMEOUT || 120000;
-        conn2.on("refresh", function(accessToken, res) {
+        conn2.on("refresh", function (accessToken, res) {
             // Refresh event will be fired when renewed access token
             // to store it in your storage for next request
             sfConnTokens.accessToken = accessToken;
             console.log('Salesforce accessToken :' + accessToken);
             console.log('Salesforce res :' + res);
         });
-        
+
         /* conn2.metadata.describe('39.0', function (err, metadata) {
             if (err) { return console.error('err', err); }
             sfMetadataDescribe = metadata;
@@ -377,36 +399,40 @@ app.get('/oauth2/callback', function (req, res) {
         }); */
     });
 });
-
+/* 
 app.listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });
-
-function stratSfMtDtFileExtract(req, res, callback){
+ */
+function stratSfMtDtFileExtract(req, res, callback) {
 
     console.log("Cookies :  ", req.cookies);
 
     conn2 = new jsforce.Connection({
-        oauth2 : oauth2,
-        instanceUrl : sfConnTokens.instanceUrl,
-        accessToken : sfConnTokens.accessToken,
-        refreshToken : sfConnTokens.refreshToken
+        oauth2: oauth2,
+        instanceUrl: sfConnTokens.instanceUrl,
+        accessToken: sfConnTokens.accessToken,
+        refreshToken: sfConnTokens.refreshToken
     });
     conn2.metadata.pollTimeout = process.env.SF_METADATA_POLL_TIMEOUT || 120000;
+    sfUser.sfOpStatus = 'Checking Salesforce Connection Status';
 
     sfListMetadata(req.cookies.sfExcludedMtDt, conn2, function (err, success) {
         //call zipper here
         console.log("sfMetadataTypes err : " + err);
         console.log("sfMetadataTypes success : " + success);
 
+        sfUser.sfOpStatus = 'Preparing to fetch Selected Metadata Type Files';
+
         sfRetrieveZip(conn2, function (err, success) {
             console.log("sfRetrieveZip err : " + err);
             console.log("sfRetrieveZip success : " + success);
+            sfUser.sfOpStatus = 'Preparing to unzip the fetched zip of Selected Salesforce files';
 
             unzipFile(function (err, success) {
                 console.log("unzipFile err : " + err);
                 console.log("unzipFile success : " + success);
-                if (!err){
+                if (!err) {
                     //res.redirect('/gitStart');
                     //res.cookie('sfFilesExtracted', true);
                     callback(null, success);
@@ -416,14 +442,14 @@ function stratSfMtDtFileExtract(req, res, callback){
     });
 }
 function getSFUserDetails(sfEndpoint, sfUserId, sfOrgId, callback) {
-    
-    var sf_access_token = 'Bearer ' +  sfConnTokens.accessToken;
 
+    var sf_access_token = 'Bearer ' + sfConnTokens.accessToken;
+    sfUser.sfOpStatus = 'Getting Salesforce User Details';
     var url = 'https://' + sfEndpoint + '.salesforce.com/id/' + sfOrgId + '/' + sfUserId;
     var options = {
         method: 'GET',
         json: true,
-        headers: {'Authorization': sf_access_token, 'X-PrettyPrint': 1, 'Accept': 'application/json' },
+        headers: { 'Authorization': sf_access_token, 'X-PrettyPrint': 1, 'Accept': 'application/json' },
         url: url
     }
     request(options, function (err, res, body) {
@@ -439,15 +465,16 @@ function getSFUserDetails(sfEndpoint, sfUserId, sfOrgId, callback) {
     })
 }
 
-function getSFMetaData(res, conn2, callback){
+function getSFMetaData(res, conn2, callback) {
 
+    sfUser.sfOpStatus = 'Getting Salesforce Metadata Details';
     conn2.metadata.describe('39.0', function (err, metadata) {
         if (err) { callback(err, null); }
         console.log('Salesforce metadata :' + metadata);
         sfMetadataDescribe = metadata;
         var mtdtarray = [];
         //Create metaDataNameArray here so that we can use the excluded elements here itself
-        for(i=0;i<sfMetadataDescribe.metadataObjects.length;i++){
+        for (i = 0; i < sfMetadataDescribe.metadataObjects.length; i++) {
             var mtdtName = sfMetadataDescribe.metadataObjects[i].xmlName;
             mtdtarray.push(mtdtName);
         }
@@ -457,6 +484,7 @@ function getSFMetaData(res, conn2, callback){
 }
 
 function sfListMetadata(excludeMetadata, conn, callback) {
+    sfUser.sfOpStatus = 'Preparing a list of Selected Metadata Types';
     var iterations = parseInt(Math.ceil(sfMetadataDescribe.metadataObjects.length / 3.0));
     //var excludeMetadata = process.env.EXCLUDE_METADATA || '';
     var excludeMetadata = excludeMetadata || process.env.EXCLUDE_METADATA || '';
@@ -517,7 +545,7 @@ function sfRetrieveZip(conn, callback) {
         });
     }
     var package = { types: _types, version: '39.0' };
-    
+
     /* 
     package = {
         'types': {
@@ -531,6 +559,7 @@ function sfRetrieveZip(conn, callback) {
         unpackaged: package
     }).stream();
     stream.on('end', function () {
+        sfUser.sfOpStatus = 'Successfully Retreived Selected Metadata Type Files';
         return callback(null, 'success retreiving zip');
     });
     stream.on('error', function (err) {
@@ -578,6 +607,7 @@ function unzipFile(callback) {
     try {
         var zip = new AdmZip(__dirname + status.tempPath + status.zipPath + status.zipFile);
         zip.extractAllTo(__dirname + status.tempPath + status.sfExtract + '/', true);
+        sfUser.sfOpStatus = 'Zip of Selected Salesforce files extracted succesfully';
         return callback(null, 'Zip extracted succesfully');
     } catch (ex) {
         return callback(ex, null);
@@ -585,7 +615,7 @@ function unzipFile(callback) {
 }
 
 function createRepo(access_token, username, callback) {
-    
+
     if (gitRepoExists) {
         return callback(null, 'git repo already exists');
     }
@@ -619,18 +649,19 @@ function createRepo(access_token, username, callback) {
             console.log('createRepo call statusCode: ', statusCode);
             console.log('createRepo call res: ', res);
             console.log('createRepo call body: ', resbody);
+            gitUser.gitStatus = 'sf-git-versioner Github Repository created';
             return callback(null, resbody);
         })
     }
 }
-    
+
 //Clones original repo
 var gitRepo;
 function gitClone(access_token, callback) {
     var folderPath = __dirname + status.tempPath + status.sfExtract;
     //https://x-access-token:[TOKEN REMOVED]@github.com/scoutapp/[REPO]
 
-    var reqPath = path.join(__dirname, '../');    
+    var reqPath = path.join(__dirname, '../');
     /* if (!fs.existsSync(reqPath + status.unZipPath)) {
         fs.mkdirSync(reqPath + status.unZipPath);
     }
@@ -706,7 +737,7 @@ function gitCommit(access_token, callback) {
     });
 }
 function gitPush(access_token, callback) {
-
+    gitUser.gitStatus = 'Pushing files to sf-git-versioner Github Repository Origin';
     gitRepo.remote_push("origin", "master", function (err, oth) {
         if (err) {
             err.details = oth;
@@ -729,10 +760,10 @@ function getGitRepo(access_token, callback) {
             return callback('git repo get failed', null);
         }
         var gitGetRepoResp = JSON.parse(body);
-        if(gitGetRepoResp.message == 'Not Found'){
+        if (gitGetRepoResp.message == 'Not Found') {
             return callback('git repo not found', null);
         }
-        else{
+        else {
             return callback(null, 'git successfully get repo');
         }
     });

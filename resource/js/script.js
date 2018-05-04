@@ -67,13 +67,18 @@ function createMetaDataSelectlist() {
     }); */
     $('.sfMtDtSelectpicker').selectpicker({
         style: 'btn-info',
-        size: 5
+        size: 5,
     });
     $('#myWizard').show();   
     var getSfFilesCookie = $.cookie("sfFilesExtracted");    
-    if(getSfFilesCookie == 'true'){
+    var gitOpSuccess = $.cookie("gitOperationSuccess");    
+    if(getSfFilesCookie == 'true' && gitOpSuccess != 'true'){
         $("[href='#step3']").tab('show');
         $('#successMsg').text('We have successfully fetched the metadata files from Salesforce you selected');
+    }
+    if(gitOpSuccess == 'true'){
+        $("[href='#step4']").tab('show');
+        $('#successMsg').text('We have successfully pushed the salesforce metadata files to your github repo');
     }
     else{
         $("[href='#step2']").tab('show');
@@ -100,6 +105,17 @@ function diff(A, B) {
     return A.filter(function (a) {
         return B.indexOf(a) == -1;
     });
+}
+
+function displaySnackBar() {
+    // Get the snackbar DIV
+    var x = document.getElementById("snackbar");
+
+    // Add the "show" class to DIV
+    x.className = "show";
+
+    // After final processing or error remove the snackbar
+    //setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
 }
 
 var login, getSfFiles, getSfFilesCookie;
@@ -163,6 +179,9 @@ $(document).ready(function(){
         $('.alert-success').show();
         $('.alert-danger').hide(); 
         $('.lg-btn').show();
+        //$("[href='#step3']").tab('hide');
+        //$("[href='#step3']").tab('show');
+        //Hide tab 3 here
         $("[href='#step4']").tab('show');
     }
     
@@ -190,42 +209,56 @@ $(document).ready(function(){
         $('#myWizard').toggle(600);
     });
     
-    $('#nextBtn').click(function () {
+    $('#nextBtn').click(function (event) {
+
+        displaySnackBar();        
         var selectedValues = $('.sfMetaSelectList').val();
-        var sfMetadataCookie = $.cookie('sfMetaDataList');
-        sfMetadataCookie = sfMetadataCookie.substring(2, sfMetadataCookie.length);
-        var allValues = $.parseJSON(sfMetadataCookie);
-
-        var selectedArray = [];
-        var allValuesArray = [];
-
-        $.each(selectedValues, function (i, v) {
-            console.log(i, v);
-            selectedArray.push(v);
-        });
-
-        $.each(allValues, function (i, v) {
-            console.log(i, v);
-            allValuesArray.push(v);
-        });
-        var excludedMtDt = diff(allValuesArray, selectedArray);
-        $.cookie('sfExcludedMtDt', excludedMtDt);
-        //window.open('/index?getSfFiles=true');
-        var url = window.location.href;
-        var params = window.location.search;
-        var path = window.location.pathname;
-        url += 'index';
-        if (url.indexOf('?') > -1) {
-            url += '&getSfFiles=true';
-        } else {
-            url += '?getSfFiles=true';
+        if(selectedValues.length < 1){
+            $('#nextBtn').prop('disabled', true);   
+            $('#snackbarTxt').text('Please select metadata types before proceeding');
+            event.preventDefault();
         }
-        window.location.href = url;
-    });
+        else{
 
+            var pollServerSf = setInterval(getCurrentSfOpStatus, 100);
+            $('#snackbarTxt').text('Starting Salesforce Metadata Extraction...');
+
+            var sfMetadataCookie = $.cookie('sfMetaDataList');
+            sfMetadataCookie = sfMetadataCookie.substring(2, sfMetadataCookie.length);
+            var allValues = $.parseJSON(sfMetadataCookie);
+
+            var selectedArray = [];
+            var allValuesArray = [];
+
+            $.each(selectedValues, function (i, v) {
+                console.log(i, v);
+                selectedArray.push(v);
+            });
+
+            $.each(allValues, function (i, v) {
+                console.log(i, v);
+                allValuesArray.push(v);
+            });
+            var excludedMtDt = diff(allValuesArray, selectedArray);
+            $.cookie('sfExcludedMtDt', excludedMtDt);
+            //window.open('/index?getSfFiles=true');
+            var url = window.location.href;
+            var params = window.location.search;
+            var path = window.location.pathname;
+            url += 'index';
+            if (url.indexOf('?') > -1) {
+                url += '&getSfFiles=true';
+            } else {
+                url += '?getSfFiles=true';
+            }
+            window.location.href = url;
+        }
+    });
+    //Logout Button Click
     $(".lg-btn").click(function () {
         $.cookie('sfUserLoggedIn', null);
         $.cookie('sfUserFullDetails', null);
+        $.cookie('sfFilesExtracted', null);
         window.open('/');
         self.close();
     });
@@ -251,18 +284,53 @@ $(document).ready(function(){
     })
     
     $('.first').click(function () {
-        $('#myWizard a:first').tab('show')
+        //$('#myWizard a:second').tab('show');
+        $("[href='#step2']").tab('show');
     })
     
     $('#gitBtn').click(function () {
+        var pollServer = setInterval(getCurrentOpStatus, 100);
+        $('#snackbarTxt').text('Waiting for Github Login...');
+        displaySnackBar();
+        
         //http://localhost:3000/index?getSfFiles=true
         var gitLoginUrl = window.location.protocol + '//' + window.location.host + '/gitStart';
         window.location.replace(gitLoginUrl);
         //window.location.href = gitLoginUrl;
     })
-    
+    $( "ul.selectpicker > li" ).click(function () {
+        $('#nextBtn').prop('disabled', false);        
+    })
+
     $('.btn.selectpicker.btn-info').click(function () {
         var $target = $('html,body'); 
         $target.animate({scrollTop: $target.height()}, 3000);
     })
+
+    var socket = io.connect('http://localhost:3000');
+    socket.on('gitStatus', function (data) {
+      //console.log(data);
+      if(data.gitStatus == 'success'){
+        clearInterval(pollServer);
+      }
+      $('#snackbarTxt').text(data.gitStatus);
+      //socket.emit('my other event', { my: 'data' });
+    });
+    var getCurrentOpStatus = function(){
+        socket.emit('get git status', { my: 'data' });
+    };
+
+    socket.on('sfOpStatus', function (data) {
+      //console.log(data);
+      if(data.sfOpStatus == 'Salesforce File Extraction Process Complete'){
+        clearInterval(pollServerSf);
+      }
+      $('#snackbarTxt').text(data.sfOpStatus);
+      //socket.emit('my other event', { my: 'data' });
+    });
+    var getCurrentSfOpStatus = function(){
+        socket.emit('get sf status', { my: 'data' });
+    };
+    //setTimeout(getCurrentOpStatus, 200);
+    //var pollServer = setInterval(getCurrentOpStatus, 100);
 });
