@@ -31,6 +31,7 @@
     "nforce-tooling": "0.0.5",
     "node-wifi-scanner": "^1.0.0",
     "pressure": "^2.1.2",
+    "socket.io": "^2.1.0",
     "table-builder": "^2.1.1"
   },
   "devDependencies": {
