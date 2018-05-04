@@ -80,7 +80,7 @@ function createMetaDataSelectlist() {
         $("[href='#step4']").tab('show');
         $('#successMsg').text('We have successfully pushed the salesforce metadata files to your github repo');
     }
-    else{
+    if(getSfFilesCookie != 'true' && gitOpSuccess != 'true'){
         $("[href='#step2']").tab('show');
     }
 }
@@ -157,8 +157,8 @@ $(document).ready(function(){
         var user = $.cookie('sfUserFullDetails');
         user = user.substring(2, user.length);
         var jsonobj = $.parseJSON(user);
-        console.log(jsonobj);
-        console.log(jsonobj.urls.profile);
+        //console.log(jsonobj);
+        //console.log(jsonobj.urls.profile);
         $('.sfUserName').html('Hello! ' + '<a target="_blank" href="' + jsonobj.urls.profile + '" >' + jsonobj.display_name + "</a>");
         $('.sfUserName').show();
         //$('.selectpicker').selectpicker();
