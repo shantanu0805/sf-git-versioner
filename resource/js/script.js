@@ -259,6 +259,7 @@ $(document).ready(function(){
         $.cookie('sfUserLoggedIn', null);
         $.cookie('sfUserFullDetails', null);
         $.cookie('sfFilesExtracted', null);
+        $.cookie('gitOperationSuccess', null);
         window.open('/');
         self.close();
     });
