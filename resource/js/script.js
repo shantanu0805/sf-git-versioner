@@ -74,7 +74,7 @@ function createMetaDataSelectlist() {
     var gitOpSuccess = $.cookie("gitOperationSuccess");    
     if(getSfFilesCookie == 'true' && gitOpSuccess != 'true'){
         $("[href='#step3']").tab('show');
-        $('#successMsg').text('We have successfully fetched the metadata files from Salesforce you selected');
+        $('#successMsg').text('We have successfully fetched the metadata files you selected, from Salesforce');
     }
     if(gitOpSuccess == 'true'){
         $("[href='#step4']").tab('show');
@@ -118,9 +118,15 @@ function displaySnackBar() {
     //setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
 }
 
+function hideSnackBar() {
+    var x = document.getElementById("snackbar");
+    x.className = "hide";
+}
+
 var login, getSfFiles, getSfFilesCookie;
 $(document).ready(function(){
     
+    $('[data-toggle="tooltip"]').tooltip();   
     var url = window.location.href;
     if (url.searchParams) {
         login = url.searchParams.get("login");
@@ -260,6 +266,7 @@ $(document).ready(function(){
         $.cookie('sfUserFullDetails', null);
         $.cookie('sfFilesExtracted', null);
         $.cookie('gitOperationSuccess', null);
+        $.cookie('gitUserLoginSuccess', null);
         window.open('/');
         self.close();
     });
@@ -271,6 +278,19 @@ $(document).ready(function(){
         $("[href=" + "'#" + nextId + "'" + "]").tab('show');
         return false;
     
+    })
+    
+    $('#selectAllBtn').click(function () {
+        //Select all
+        $('.sfMetaSelectList').selectpicker('selectAll');
+        $('#nextBtn').prop('disabled', false);
+    })
+    
+    
+    $('#clearBtn').click(function () {
+        //Clear the selections
+        $(".sfMetaSelectList").val('default');
+        $(".sfMetaSelectList").selectpicker("refresh");
     })
     
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -299,7 +319,7 @@ $(document).ready(function(){
         window.location.replace(gitLoginUrl);
         //window.location.href = gitLoginUrl;
     })
-    $( "ul.selectpicker > li" ).click(function () {
+    $( "ul.dropdown-menu.inner.selectpicker > li" ).click(function () {
         $('#nextBtn').prop('disabled', false);        
     })
 
@@ -314,8 +334,37 @@ $(document).ready(function(){
       //console.log(data);
       if(data.gitStatus == 'success'){
         clearInterval(pollServer);
+        console.log('>> git commits : ' + data.gitCommits); 
+        var commitObj =  JSON.stringify(data.gitCommits);
+        $.cookie('gitCommitInfo', commitObj);
+        //create git commit html here
+        var commitObj = data.gitCommits;
+        for (var key in commitObj) {
+            commitObj[key].author = commitObj[key].author.name;
+            commitObj[key].committer = commitObj[key].committer.name;
+        }
+        if($('#gitCommitSection').html().length < 5){
+            $('#gitCommitSection').createTable(commitObj, {});
+            $("#gitCommitSection").show();
+            $('#snackbarTxt').hide();
+            $('#gitOpStatusMsg').hide();
+            $('#gitLogo').hide();
+            //var elem = $('.json-to-table')["0"].children[1].children["0"].children[1];elem.innerText;
+            hideSnackBar();
+            var $target = $('html,body'); 
+            $target.animate({scrollTop: $target.height()}, 3000);
+            for(i=0; i<3; i++){
+                var elem = $('.json-to-table')["0"].children[1].children[i].children[1];
+                var commitId = elem.innerText;
+                var shortId = commitId.substring(0, 7);
+                var commitHtml = "<code><a target='_blank' href='https://github.com/shantanu107/test0805/commit/" + commitId + "'>" + shortId + "</a></code>";
+                $(elem).html(commitHtml);
+                $(elem).css('text-align', 'center');
+            }
+        }
       }
       $('#snackbarTxt').text(data.gitStatus);
+      $('#gitOpStatusMsg').text(data.gitStatus);
       //socket.emit('my other event', { my: 'data' });
     });
     var getCurrentOpStatus = function(){
@@ -335,4 +384,85 @@ $(document).ready(function(){
     };
     //setTimeout(getCurrentOpStatus, 200);
     //var pollServer = setInterval(getCurrentOpStatus, 100);
+
+    var gitLoginSuccess = $.cookie("gitUserLoginSuccess");    
+    
+    if(gitLoginSuccess == 'true'){
+        $("[href='#step3']").tab('show');
+        $('#successMsg').text('Git Login successfull. Proceeding with code push');
+        $('#gitBtn').hide();
+        var pollServer = setInterval(getCurrentOpStatus, 100);
+        $('#snackbarTxt').text('Proceeding with git code push...');
+        //$('#gitOpStatusMsg').attr('style', 'padding: 2%;border: 1px dashed darkred;');
+        displaySnackBar();
+    }
+    $(function(){
+
+        function after_form_submitted(data) {
+            if(data.result == 'success'){
+                $('form#reused_form').hide();
+                $('#success_message').show();
+                $('#error_message').hide();
+            }
+            
+            else{
+                $('#error_message').append('<ul></ul>');
+    
+                jQuery.each(data.errors,function(key,val){
+                    $('#error_message ul').append('<li>'+key+':'+val+'</li>');
+                });
+
+                $('#success_message').hide();
+                $('#error_message').show();
+    
+                //reverse the response on the button
+                $('button[type="button"]', $form).each(function(){
+
+                    $btn = $(this);
+                    label = $btn.prop('orig_label');
+                    if(label){
+                        $btn.prop('type','submit' ); 
+                        $btn.text(label);
+                        $btn.prop('orig_label','');
+                    }
+                });
+                
+            }//else
+        }
+    
+        $('#reused_form').submit(function(e){
+            e.preventDefault();
+    
+            $form = $(this);
+            var formData = $form.serialize();
+            var formDataJson = JSON.stringify(formData);
+
+            var data = $('#reused_form').serializeArray().reduce(function(obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {});
+            console.log('>> data : ' + data);
+
+            console.log('>> formData : ' + formData);
+            console.log('>> formDataJson : ' + formDataJson);
+            //show some response on the button
+            $('button[type="submit"]', $form).each(function()
+            {
+                $btn = $(this);
+                $btn.prop('type','button' ); 
+                $btn.prop('orig_label',$btn.text());
+                $btn.text('Sending ...');
+            });
+            
+            
+            $.ajax({
+                type: "POST",
+                url: '/feedback',
+                data: data,
+                dataType: "json",
+                success: after_form_submitted
+            });
+            
+          });	
+    });
 });

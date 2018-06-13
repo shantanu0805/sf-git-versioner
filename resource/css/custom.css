@@ -15,12 +15,20 @@ ul.dropdown-menu.inner{
     max-height: 236px;
     overflow-y: auto;
 }
-.btn-success {
+#nextBtn {
     margin-left: 5%;
 }
 .welcomTxt {
-    width:60%; font-size: large;
+    width:60%;
+    font-size: large;
 }
+.json-to-table th{
+    text-align: center;
+}
+.json-to-table{
+    word-break: break-word;
+}
+
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {
     visibility: hidden; /* Hidden by default. Visible on click */
