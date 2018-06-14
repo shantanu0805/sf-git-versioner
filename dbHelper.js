@@ -2,7 +2,17 @@ var dbhelper = {};
 const pg = require('pg');
 
 //var connectionString = process.env.DATABASE_URL || "postgres://postgres:localhost:5432/SfGitVersionerPgDb";//postgresql://localhost
+const { Pool, Client } = require('pg');
+const connectionString = '';
+console.log('>> DATABASE_URL: ' + process.env.DATABASE_URL);
+var env = process.env.NODE_ENV || 'development';
+connectionString = env == 'production' ? process.env.DATABASE_URL : "postgres://sfmetadata:t1992107@localhost:5432/SfGitVersionerPgDb";
 
+const pool = new Pool({
+  connectionString: connectionString,
+})
+
+/*
 const config = {
     user: 'sfmetadata',
     database: 'SfGitVersionerPgDb',
@@ -12,10 +22,13 @@ const config = {
 
 // pool takes the object above -config- as parameter
 const pool = new pg.Pool(config);
+*/
 var sfUserExists = false;
 var gitUserExists = false;
 dbhelper.insertUpdateSfUserDetails = function(sfUserObj){
     console.log('>> sfUserObj in dbhelper.insertSfUserDetails : ' + sfUserObj);
+    console.log('>> pool : ' + pool);
+
     pool.connect(function (err, client, done) {
         if (err) {
             console.log("Can not connect to the DB" + err);

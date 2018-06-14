@@ -13,8 +13,13 @@ config.git_client_secret = '4881ea1e3619c0f286fc756b2bde83e3044c3d74';
 config.git_login_url = 'https://github.com/login/oauth/';
 config.git_api_url = 'https://api.github.com/user';
 config.git_sf_repo_name = 'sf-git-versioner';
-config.git_sf_repo_readme =' SALESFORCE VERSIONER'
-config.git_sf_repo_url = 'https://x-access-token:'
+config.git_sf_repo_readme =' SALESFORCE VERSIONER';
+config.git_sf_repo_url = 'https://x-access-token:';
+config.db_username = 'sfmetadata';
+config.db_password = 't1992107';
+config.db_host = 'localhost';
+config.db_port = '5432';
+config.db_name  = 'SfGitVersionerPgDb';
 //SF_METADATA_POLL_TIMEOUT=120000
 
 module.exports = config;
