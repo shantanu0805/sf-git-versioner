@@ -3,11 +3,11 @@ const pg = require('pg');
 
 //var connectionString = process.env.DATABASE_URL || "postgres://postgres:localhost:5432/SfGitVersionerPgDb";//postgresql://localhost
 const { Pool, Client } = require('pg');
-const connectionString = '';
+var connectionString = '';
 console.log('>> DATABASE_URL: ' + process.env.DATABASE_URL);
 var env = process.env.NODE_ENV || 'development';
 connectionString = env == 'production' ? process.env.DATABASE_URL : "postgres://sfmetadata:t1992107@localhost:5432/SfGitVersionerPgDb";
-
+console.log('>> connectionString : ' + connectionString);
 const pool = new Pool({
   connectionString: connectionString,
 })
