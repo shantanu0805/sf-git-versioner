@@ -296,11 +296,17 @@ $(document).ready(function(){
     });
     //Logout Button Click
     $(".lg-btn").click(function () {
+        /* 
         $.cookie('sfUserLoggedIn', null);
         $.cookie('sfUserFullDetails', null);
         $.cookie('sfFilesExtracted', null);
         $.cookie('gitOperationSuccess', null);
-        $.cookie('gitUserLoginSuccess', null);
+        $.cookie('gitUserLoginSuccess', null); 
+        */
+        var cookies = $.cookie();
+        for(var cookie in cookies) {
+           $.removeCookie(cookie);
+        }
         window.open('/');
         self.close();
     });
