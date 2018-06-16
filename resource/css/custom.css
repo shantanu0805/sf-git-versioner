@@ -29,6 +29,13 @@ ul.dropdown-menu.inner{
     word-break: break-word;
 }
 
+#gitOpLogs{
+    font-size: 75%;
+    border: 1px dashed grey;
+    padding: 1%;
+    margin-bottom: 2%;
+}
+
 /* The snackbar - position it at the bottom and in the middle of the screen */
 #snackbar {
     visibility: hidden; /* Hidden by default. Visible on click */

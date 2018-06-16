@@ -76,10 +76,11 @@ function createMetaDataSelectlist() {
         $("[href='#step3']").tab('show');
         $('#successMsg').text('We have successfully fetched the metadata files you selected, from Salesforce');
     }
+    /* 
     if(gitOpSuccess == 'true'){
         $("[href='#step4']").tab('show');
         $('#successMsg').text('We have successfully pushed the salesforce metadata files to your github repo');
-    }
+    } */
     if(getSfFilesCookie != 'true' && gitOpSuccess != 'true'){
         $("[href='#step2']").tab('show');
     }
@@ -121,6 +122,39 @@ function displaySnackBar() {
 function hideSnackBar() {
     var x = document.getElementById("snackbar");
     x.className = "hide";
+}
+
+function createAndShowGitLog() {
+    $('#gitOpLogs').html($.cookie('gitOpLogs'));$('#gitOpLogs').show();
+}
+
+function createAndShowCommitTable(commitObj) {
+    
+    //$('#step4').hide();
+    $('#gitBtn').hide();
+    for (var key in commitObj) {
+        commitObj[key].author = commitObj[key].author.name;
+        commitObj[key].committer = commitObj[key].committer.name;
+    }
+    if($('#gitCommitSection').html().length < 5){
+        $('#gitCommitSection').createTable(commitObj, {});
+        $("#gitCommitSection").show();
+        $('#snackbarTxt').hide();
+        $('#gitOpStatusMsg').hide();
+        $('#gitLogo').hide();
+        //var elem = $('.json-to-table')["0"].children[1].children["0"].children[1];elem.innerText;
+        hideSnackBar();
+        var $target = $('html,body'); 
+        $target.animate({scrollTop: $target.height()}, 2000);
+        for(i=0; i<3; i++){
+            var elem = $('.json-to-table')["0"].children[1].children[i].children[1];
+            var commitId = elem.innerText;
+            var shortId = commitId.substring(0, 7);
+            var commitHtml = "<code><a target='_blank' href='https://github.com/shantanu107/test0805/commit/" + commitId + "'>" + shortId + "</a></code>";
+            $(elem).html(commitHtml);
+            $(elem).css('text-align', 'center');
+        }
+    }
 }
 
 var login, getSfFiles, getSfFilesCookie;
@@ -178,7 +212,7 @@ $(document).ready(function(){
         $('.lg-btn').hide();
         $('#myWizard').hide();
     }
-    
+    /* 
     if (gitOperationSuccess == 'true') {
         
         $('#jumbo1').hide();
@@ -190,7 +224,7 @@ $(document).ready(function(){
         //Hide tab 3 here
         $("[href='#step4']").tab('show');
     }
-    
+     */
     $("#prodBtn").click(prodLogin);
     $("#sandBtn").click(sandLogin);
 
@@ -332,8 +366,19 @@ $(document).ready(function(){
     var socket = io.connect(window.location.protocol + "//" +window.location.host);
     socket.on('gitStatus', function (data) {
       //console.log(data);
+      console.log(data.gitStatus);
+      var gitOpLogsHtml = $('#gitOpLogs').html();
+      $.cookie('gitOpLogs', gitOpLogsHtml);
+      if($('#gitOpLogs').text().indexOf(data.gitStatus) < 0){
+        gitOpLogsHtml += '<br /><code> >> ' + new Date().toISOString() + ' : ' + data.gitStatus + ' </code>';
+        $('#gitOpLogs').html(gitOpLogsHtml);
+        $.cookie('gitOpLogs', gitOpLogsHtml);
+      }
+      
       if(data.gitStatus == 'success'){
+
         clearInterval(pollServer);
+        $.cookie('gitOperationSuccess', true);
         console.log('>> git commits : ' + data.gitCommits); 
         var commitObj =  JSON.stringify(data.gitCommits);
         $.cookie('gitCommitInfo', commitObj);
@@ -349,6 +394,7 @@ $(document).ready(function(){
             $('#snackbarTxt').hide();
             $('#gitOpStatusMsg').hide();
             $('#gitLogo').hide();
+            //$('#gitOpLogs').hide();
             //var elem = $('.json-to-table')["0"].children[1].children["0"].children[1];elem.innerText;
             hideSnackBar();
             var $target = $('html,body'); 
@@ -386,15 +432,26 @@ $(document).ready(function(){
     //var pollServer = setInterval(getCurrentOpStatus, 100);
 
     var gitLoginSuccess = $.cookie("gitUserLoginSuccess");    
+    var gitOpStatus = $.cookie("gitOperationSuccess");    
     
-    if(gitLoginSuccess == 'true'){
+    if(gitLoginSuccess == 'true' && gitOpStatus != 'true'){
         $("[href='#step3']").tab('show');
         $('#successMsg').text('Git Login successfull. Proceeding with code push');
         $('#gitBtn').hide();
         var pollServer = setInterval(getCurrentOpStatus, 100);
         $('#snackbarTxt').text('Proceeding with git code push...');
+        //$('#gitOpLogs').html('<code> ' + new Date().toISOString() + ' >> Proceeding with git code push... ' + ' </code>');
+        $('#gitOpLogs').html('Logs<br /><code> >> ' + new Date().toISOString() + ' : Proceeding with git code push... </code>');
+        $('#gitOpLogs').show();
         //$('#gitOpStatusMsg').attr('style', 'padding: 2%;border: 1px dashed darkred;');
         displaySnackBar();
+    }
+    
+    if(gitLoginSuccess == 'true' && gitOpStatus == 'true'){
+        $("[href='#step3']").tab('show');
+        var commitObj = $.parseJSON($.cookie('gitCommitInfo'));
+        createAndShowCommitTable(commitObj);
+        createAndShowGitLog();
     }
     $(function(){
 
