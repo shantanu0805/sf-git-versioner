@@ -313,6 +313,7 @@ function getGitUser(access_token, response) {
                                                                                                     gitUser.Commits = commits;
                                                                                                     gitUser.gitStatus = 'success';
                                                                                                 }
+                                                                                                util.deleteFolderRecursive(path.join(__dirname, status.tempPath));
                                                                                             });
                                                                                         }
                                                                                         else {
@@ -320,7 +321,7 @@ function getGitUser(access_token, response) {
                                                                                             gitUser.gitStatus = 'An error occurred : ' + err;
                                                                                             //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                                                         }
-                                                                                        util.deleteFolderRecursive(path.join(__dirname, status.tempPath));
+                                                                                        //
                                                                                     });
                                                                                 }
                                                                             });
