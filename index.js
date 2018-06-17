@@ -18,6 +18,7 @@ var cookieParser = require('cookie-parser');
 var config = require(path.join(__dirname + '/config.js'));
 var dbHelper = require(path.join(__dirname + '/dbHelper.js'));
 var mailhelper = require(path.join(__dirname + '/mailer.js'));
+var util = require(path.join(__dirname + '/util.js'));
 var bodyParser = require("body-parser");
 var express = require('express');
 var app = express();
@@ -319,6 +320,7 @@ function getGitUser(access_token, response) {
                                                                                             gitUser.gitStatus = 'An error occurred : ' + err;
                                                                                             //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                                                         }
+                                                                                        util.deleteFolderRecursive(path.join(__dirname, status.tempPath));
                                                                                     });
                                                                                 }
                                                                             });
