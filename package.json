@@ -30,6 +30,7 @@
     "nforce": "^1.10.0",
     "nforce-tooling": "0.0.5",
     "node-wifi-scanner": "^1.0.0",
+    "nodemailer": "^4.6.7",
     "pg": "^7.4.3",
     "pressure": "^2.1.2",
     "socket.io": "^2.1.0",

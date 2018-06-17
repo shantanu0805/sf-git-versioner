@@ -17,6 +17,7 @@ var cookieParser = require('cookie-parser');
 //var session = require('express-session');
 var config = require(path.join(__dirname + '/config.js'));
 var dbHelper = require(path.join(__dirname + '/dbHelper.js'));
+var mailhelper = require(path.join(__dirname + '/mailer.js'));
 var bodyParser = require("body-parser");
 var express = require('express');
 var app = express();
@@ -127,7 +128,27 @@ app.post('/feedback', function (req, res) {
     console.log('>> Feedback Request : ' + req.body.message);
     //Add to these details the user's available Salesforce and Git details
     //Send these dateails either to an email or to db;
-    res.status(200).json({ result: 'success' });
+    var user = {};
+    if(req.cookies.sfUserFullDetails){
+        user = req.cookies.sfUserFullDetails;
+    }
+    else{
+        user.display_name = req.body.name;
+        user.email = req.body.email;
+    }
+    user.message = req.body.message;
+    user.bug = req.body.bug ? true : false;
+    user.feedback = req.body.feedback ? true : false;
+
+    mailhelper.sendEmail(user, function (err, success) {
+        
+        if (!err){
+            res.status(200).json({ result: 'success' });
+        }
+        else{
+            res.status(200).json({ errors: err });
+        }
+    });
 });
 
 app.get('/success', function (req, res) {

@@ -197,6 +197,8 @@ $(document).ready(function(){
         var user = $.cookie('sfUserFullDetails');
         user = user.substring(2, user.length);
         var jsonobj = $.parseJSON(user);
+        $('#name').val(jsonobj.display_name);
+        $('#email').val(jsonobj.email);
         //console.log(jsonobj);
         //console.log(jsonobj.urls.profile);
         $('.sfUserName').html('Hello! ' + '<a target="_blank" href="' + jsonobj.urls.profile + '" >' + jsonobj.display_name + "</a>");
@@ -413,6 +415,7 @@ $(document).ready(function(){
                 $(elem).html(commitHtml);
                 $(elem).css('text-align', 'center');
             }
+            $( "#gitCommitSection" ).prepend( "<p>Last 3 commit details : </p>" );
         }
       }
       $('#snackbarTxt').text(data.gitStatus);

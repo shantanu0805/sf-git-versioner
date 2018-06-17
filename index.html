@@ -220,7 +220,7 @@
     <div id="footer" class="footerDiv">
         <div class="container">
             <div class="container-box rotated">
-                <button style="float: right;" type="button" class="btn turned-button btn-link" data-toggle="modal" data-target="#myModal">Contact Us</button>
+                <button id="contactBtn" style="float: right;" type="button" class="btn turned-button btn-link" data-toggle="modal" data-target="#myModal">Contact Us</button>
             </div>
             <!-- Modal -->
             <div id="myModal" class="modal fade" role="dialog">
@@ -245,12 +245,14 @@
                                     <input type="email" class="form-control" id="email" name="email" required maxlength="50">
                                 </div>
                                 <div class="form-group">
-                                    <label for="bug"> Bug?</label>
-                                    <input type="checkbox" class="form-control" id="bugChkbx" name="bug">
-                                </div>
-                                <div class="form-group">
-                                    <label for="feedback"> Suggestion?</label>
-                                    <input type="checkbox" class="form-control" id="feedbackChkbx" name="feedback">
+                                    <div>
+                                        <label for="bug"> Bug?</label>
+                                        <input type="checkbox" class="form-control" id="bugChkbx" name="bug">
+                                    </div>
+                                    <div>
+                                        <label for="feedback"> Suggestion?</label>
+                                        <input type="checkbox" class="form-control" id="feedbackChkbx" name="feedback">
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="name"> Message:</label>
