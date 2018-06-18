@@ -1,7 +1,7 @@
 var config = {};
 
 config.app_local_url ='http://localhost:3000';
-config.app_prod_url = 'https://sf-git-versioner.herokuapp.com';
+config.app_prod_url = 'https://salesforcemetadata.herokuapp.com';
 //CALLBACK_URL = 'http://localhost:3000';
 config.sf_client_id = '3MVG9HxRZv05HarStJl4amZCrNBqElkmxu712ds3H7h77BVraWr7Rl4aFhIU8oNMmKDXDBDYlP8y6_Hs39R7H';
 config.sf_client_secret = '5522323617141747048';

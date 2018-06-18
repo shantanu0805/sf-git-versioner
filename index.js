@@ -108,6 +108,7 @@ app.get('/index', function (req, res) {
             if (!err) {
                 console.log('stratSfMtDtFileExtract Process Success');
                 sfUser.sfOpStatus = 'Salesforce File Extraction Process Complete';
+                //res.cookie('sfUserLoggedIn', true, { domain: domain, path: '/'});
                 res.cookie('sfFilesExtracted', true).sendFile(path.join(__dirname + '/index.html'));
             }
             else {
@@ -321,7 +322,6 @@ function getGitUser(access_token, response) {
                                                                                             gitUser.gitStatus = 'An error occurred : ' + err;
                                                                                             //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                                                         }
-                                                                                        //
                                                                                     });
                                                                                 }
                                                                             });
