@@ -155,6 +155,7 @@ function createAndShowCommitTable(commitObj) {
             $(elem).css('text-align', 'center');
         }
     }
+    $.cookie('sfExcludedMtDt', null);
 }
 
 var login, getSfFiles, getSfFilesCookie;
