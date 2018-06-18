@@ -435,7 +435,17 @@ app.get('/oauth2/callback', function (req, res) {
             console.log("getSFUserDetails success : " + success);
             if (!err) {
                 sfUser.sfOpStatus = 'Salesforce User Details Fetched';
-                sfUserFullDetails = success;
+                //sfUserFullDetails = success;
+
+                sfUserFullDetails.display_name = success.display_name;
+                sfUserFullDetails.id = success.id;
+                sfUserFullDetails.email = success.email;
+                sfUserFullDetails.user_id = success.user_id;
+                sfUserFullDetails.organization_id = success.organization_id;
+                sfUserFullDetails.username = success.username;
+                sfUserFullDetails.urls= {};
+                sfUserFullDetails.urls.profile = success.urls.profile;
+
                 dbHelper.updateSfUserDetails(sfUser.tokenId, sfUserFullDetails);
                 res.cookie('sfUserFullDetails', sfUserFullDetails);
                 //res.redirect('/success?sfLogin=' + encodeURIComponent('true'));
