@@ -155,7 +155,6 @@ function createAndShowCommitTable(commitObj) {
             $(elem).css('text-align', 'center');
         }
     }
-    $.cookie('sfExcludedMtDt', null);
 }
 
 var login, getSfFiles, getSfFilesCookie;
@@ -417,6 +416,7 @@ $(document).ready(function(){
                 $(elem).css('text-align', 'center');
             }
             $( "#gitCommitSection" ).prepend( "<p>Last 3 commit details : </p>" );
+            $.cookie('sfExcludedMtDt', null);
         }
       }
       $('#snackbarTxt').text(data.gitStatus);
