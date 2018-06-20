@@ -259,6 +259,18 @@ function getGitUser(access_token, response) {
                             console.log("gitClone success : " + success);
                             if (!err) {
 
+                                console.log('>> checking for git repo folder before git pull');
+                                if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/')) {
+                                    fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/');
+                                }
+                                if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId)) {
+                                    fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId);
+                                }
+                                console.log('cwd 1 : ' + __dirname);
+                                var gitRepoPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+                                process.chdir(gitRepoPath);
+                                console.log('cwd 2 : ' + __dirname);
+                                
                                 gitRepo.pull(function (err, result) {
                                     console.log('>> git pull err : ' + err);
                                     console.log('>> git pull result : ' + result);
