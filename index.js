@@ -257,84 +257,71 @@ function getGitUser(access_token, response) {
                         gitClone(access_token, function (err, success) {
                             console.log("gitClone err : " + err);
                             console.log("gitClone success : " + success);
+                            if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/')) {
+                                fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/');
+                            }
+                            if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId)) {
+                                fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId);
+                            }
                             if (!err) {
-
-                                console.log('>> checking for git repo folder before git pull');
-                                if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/')) {
-                                    fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/');
-                                }
-                                if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId)) {
-                                    fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId);
-                                }
-                                console.log('cwd 1 : ' + __dirname);
-                                var gitRepoPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
-                                process.chdir(gitRepoPath);
-                                console.log('cwd 2 : ' + __dirname);
-                                
-                                gitRepo.pull(function (err, result) {
-                                    console.log('>> git pull err : ' + err);
-                                    console.log('>> git pull result : ' + result);
-                                    if (!err) {
-                                        //reqPath + status.unZipPath + '_' + sfUser.userOrgId
-                                        //folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
-                                        var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
-                                        var reqPath = path.join(__dirname, '../');
-                                        //var destination = reqPath + status.unZipPath + '_'  + sfUser.userOrgId;
-                                        var destination = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
-                                        // copy source folder to destination
-                                        fse.copy(source, destination, function (err) {
-                                            if (err) {
-                                                console.log('An error occured while copying the folder.');
-                                                return console.error(err);
-                                            }
-                                            console.log('Copy completed!');
-                                            gitUser.gitStatus = 'Copying Salesforce files into sf-git-versioner Github Repository';
-                                            gitAdd(access_token, function (err, success) {
-                                                console.log("gitAdd err : " + err);
-                                                console.log("gitAdd success : " + success);
+                                //reqPath + status.unZipPath + '_' + sfUser.userOrgId
+                                //folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+                                var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
+                                var reqPath = path.join(__dirname, '../');
+                                //var destination = reqPath + status.unZipPath + '_'  + sfUser.userOrgId;
+                                var destination = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+                                // copy source folder to destination
+                                fse.copy(source, destination, function (err) {
+                                    if (err) {
+                                        console.log('An error occured while copying the folder.');
+                                        return console.error(err);
+                                    }
+                                    console.log('Copy completed!');
+                                    gitUser.gitStatus = 'Copying Salesforce files into sf-git-versioner Github Repository';
+                                    gitAdd(access_token, function (err, success) {
+                                        console.log("gitAdd err : " + err);
+                                        console.log("gitAdd success : " + success);
+                                        if (!err) {
+                                            gitUser.gitStatus = 'Running git Add command for sf-git-versioner Github Repository';
+                                            gitCommit(access_token, function (err, success) {
+                                                console.log("gitCommit err : " + err);
+                                                console.log("gitCommit success : " + success);
                                                 if (!err) {
-                                                    gitUser.gitStatus = 'Running git Add command for sf-git-versioner Github Repository';
-                                                    gitCommit(access_token, function (err, success) {
-                                                        console.log("gitCommit err : " + err);
-                                                        console.log("gitCommit success : " + success);
-                                                        if (!err) {
-                                                            gitUser.gitStatus = 'Commiting files on sf-git-versioner Github Repository';
+                                                    gitUser.gitStatus = 'Commiting files on sf-git-versioner Github Repository';
 
-                                                            gitRepo.remotes(function (err, result) {
-                                                                console.log(result);
+                                                    gitRepo.remotes(function (err, result) {
+                                                        console.log(result);
+                                                        if (!err) {
+                                                            gitRepo.remote_remove('origin', function (err, result) {
+                                                                console.log('>> git access token : ' + access_token);
+                                                                console.log('>> git remote_remove err : ' + err);
+                                                                console.log('>> git remote_remove result : ' + result);
                                                                 if (!err) {
-                                                                    gitRepo.remote_remove('origin', function (err, result) {
-                                                                        console.log('>> git access token : ' + access_token);
-                                                                        console.log('>> git remote_remove err : ' + err);
-                                                                        console.log('>> git remote_remove result : ' + result);
+                                                                    //https://username:access-token@github.com/username/repo.git
+                                                                    //gitRepo.remote_add('origin', 'git@github.com:shantanu107/test0805.git ', function (err, result) {
+                                                                    gitRepo.remote_add('origin', 'https://' + gitUser.username + ':' + access_token + '@github.com/' + gitUser.username + '/test0805.git', function (err, result) {
+                                                                        console.log('>> remote add result : ' + result);
                                                                         if (!err) {
-                                                                            //https://username:access-token@github.com/username/repo.git
-                                                                            //gitRepo.remote_add('origin', 'git@github.com:shantanu107/test0805.git ', function (err, result) {
-                                                                            gitRepo.remote_add('origin', 'https://' + gitUser.username + ':' + access_token + '@github.com/' + gitUser.username + '/test0805.git', function (err, result) {
-                                                                                console.log('>> remote add result : ' + result);
+                                                                            gitPush(access_token, function (err, success) {
+                                                                                console.log("gitPush err : " + err);
+                                                                                console.log("gitPush success : " + success);
                                                                                 if (!err) {
-                                                                                    gitPush(access_token, function (err, success) {
-                                                                                        console.log("gitPush err : " + err);
-                                                                                        console.log("gitPush success : " + success);
+                                                                                    console.log('Full Process Success');
+                                                                                    gitUser.gitStatus = 'Files successfully pushed to sf-git-versioner Github Repository Origin';
+                                                                                    gitRepo.commits('master', 3, function (err, commits) {
+                                                                                        console.log("git commits err : " + err);
+                                                                                        console.log("git commits : " + commits);
                                                                                         if (!err) {
-                                                                                            console.log('Full Process Success');
-                                                                                            gitUser.gitStatus = 'Files successfully pushed to sf-git-versioner Github Repository Origin';
-                                                                                            gitRepo.commits('master', 3, function (err, commits) {
-                                                                                                console.log("git commits err : " + err);
-                                                                                                console.log("git commits : " + commits);
-                                                                                                if (!err) {
-                                                                                                    gitUser.Commits = commits;
-                                                                                                    gitUser.gitStatus = 'success';
-                                                                                                }
-                                                                                                util.deleteFolderRecursive(path.join(__dirname, status.tempPath));
-                                                                                            });
+                                                                                            gitUser.Commits = commits;
+                                                                                            gitUser.gitStatus = 'success';
                                                                                         }
-                                                                                        else {
-                                                                                            console.log('Full Process Error : ' + err);
-                                                                                            gitUser.gitStatus = 'An error occurred : ' + err;
-                                                                                            //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
-                                                                                        }
+                                                                                        util.deleteFolderRecursive(path.join(__dirname, status.tempPath));
                                                                                     });
+                                                                                }
+                                                                                else {
+                                                                                    console.log('Full Process Error : ' + err);
+                                                                                    gitUser.gitStatus = 'An error occurred : ' + err;
+                                                                                    //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
                                                                                 }
                                                                             });
                                                                         }
@@ -342,25 +329,23 @@ function getGitUser(access_token, response) {
                                                                 }
                                                             });
                                                         }
-                                                        else {
-                                                            if (err.indexOf('nothing to commit') >= 0) {
-                                                                console.log('git Commit Error : ' + err);
-                                                                gitUser.gitStatus = 'Git repo already up to date. No new changes to commit.';
-                                                            }
-                                                            else {
-                                                                console.log('git Commit Error : ' + err);
-                                                                gitUser.gitStatus = 'An error occurred : ' + err;
-                                                                //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
-                                                            }
-                                                        }
                                                     });
                                                 }
+                                                else {
+                                                    if (err.indexOf('nothing to commit') >= 0) {
+                                                        console.log('git Commit Error : ' + err);
+                                                        gitUser.gitStatus = 'Git repo already up to date. No new changes to commit.';
+                                                    }
+                                                    else {
+                                                        console.log('git Commit Error : ' + err);
+                                                        gitUser.gitStatus = 'An error occurred : ' + err;
+                                                        //response.cookie('gitOperationSuccess', false).redirect('/index?gitOpSuccess=false');
+                                                    }
+                                                }
                                             });
-                                        });
-
-                                    }
+                                        }
+                                    });
                                 });
-
 
                             }
                         });
