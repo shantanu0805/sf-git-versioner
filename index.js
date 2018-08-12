@@ -13,6 +13,8 @@ var git = require('gift');
 var path = require('path');
 var fse = require("fs-extra");
 var cookieParser = require('cookie-parser');
+var ncp = require('ncp').ncp;
+ncp.limit = 16;
 //const pg = require('pg');
 //var session = require('express-session');
 var config = require(path.join(__dirname + '/config.js'));
@@ -257,6 +259,7 @@ function getGitUser(access_token, response) {
                         gitClone(access_token, function (err, success) {
                             console.log("gitClone err : " + err);
                             console.log("gitClone success : " + success);
+                            //git clone path = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
                             if (!fs.existsSync(__dirname + status.tempPath + 'gitRepo/')) {
                                 fs.mkdirSync(__dirname + status.tempPath + 'gitRepo/');
                             }
@@ -266,12 +269,23 @@ function getGitUser(access_token, response) {
                             if (!err) {
                                 //reqPath + status.unZipPath + '_' + sfUser.userOrgId
                                 //folderPath = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
+                                //zip.extractAllTo(__dirname + status.tempPath + status.sfExtract + '/', true);
                                 var source = __dirname + status.tempPath + status.sfExtract + 'unpackaged/';
                                 var reqPath = path.join(__dirname, '../');
                                 //var destination = reqPath + status.unZipPath + '_'  + sfUser.userOrgId;
                                 var destination = __dirname + status.tempPath + 'gitRepo/' + '_' + sfUser.userOrgId;
                                 // copy source folder to destination
-                                fse.copy(source, destination, function (err) {
+                                /*
+                                ncp(source, destination, function (err) {
+                                    if (err) {
+                                      return console.error(err);
+                                    }
+                                    console.log('done!');
+                                });
+                                */
+                               //Replaced fse with ncp
+                                //fse.copy(source, destination, function (err) {
+                                ncp(source, destination, function (err) {  
                                     if (err) {
                                         console.log('An error occured while copying the folder.');
                                         return console.error(err);
@@ -346,7 +360,6 @@ function getGitUser(access_token, response) {
                                         }
                                     });
                                 });
-
                             }
                         });
                     }
